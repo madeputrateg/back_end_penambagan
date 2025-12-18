@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic File Upload</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .form-container { max-width: 500px; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .file-group { 
+            display: flex; 
+            align-items: center; 
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .file-group input[type="file"] { flex-grow: 1; }
+        .remove-btn { color: #ff4444; border: 1px solid #ff4444; background: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .remove-btn:hover { background: #ff4444; color: white; }
+        .add-btn { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; }
+        .submit-btn { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; width: 100%; cursor: pointer; font-size: 16px; }
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto; /* Adds horizontal scroll for many columns */
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            }
+
+            table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            white-space: nowrap; /* Prevents text wrapping in cells */
+            }
+
+            th, td {
+            padding: 10px;
+            border: 1px solid #eee;
+            text-align: center;
+            }
+
+            th {
+            background-color: #007bff;
+            color: white;
+            }
+
+            tr:nth-child(even) {
+            background-color: #f9f9f9;
+            }
+
+            .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 15px;
+            }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Upload Documents</h2>
+    
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        
+        <button type="button" class="add-btn" onclick="addFileField()">+ Add feature</button>
+
+        <div id="file-container">
+            <div class="file-group">
+                <label>pickle File</label>
+                <input type="file" name="pickle" required>
+                <span style="visibility: hidden;"><button class="remove-btn">Delete</button></span>
+            </div>
+
+            <div class="file-group">
+                <label>class</label>
+                <input type="text" name="class" required>
+                <span style="visibility: hidden;"><button class="remove-btn">Delete</button></span>
+            </div>
+
+            <div class="file-group">
+                <label>python file</label>
+                <input type="file" name="python" required>
+                <span style="visibility: hidden;"><button class="remove-btn">Delete</button></span>
+            </div>
+        </div>
+        <hr>
+        <button type="submit" class="submit-btn">Upload All Files</button>
+    </form>
+    <div class="table-wrapper">
+        <table id="heartDataTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Age</th>
+                <th>Sex</th>
+                <th>FBS</th>
+                <th>RestECG</th>
+                <th>Exang</th>
+                <th>Oldpeak</th>
+                <th>CP</th>
+                <th>Chol</th>
+                <th>TrestBPS</th>
+                <th>Slope</th>
+                <th>CA</th>
+                <th>Thal</th>
+                <th>Target</th>
+                <th>Pred Target</th>
+                <th>Valid</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-controls">
+        <button id="prevBtn" onclick="prevPage()">Previous</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" onclick="nextPage()">Next</button>
+    </div>
+</div>
+
+<script>
+    function addFileField() {
+        const container = document.getElementById('file-container');
+        
+        // Create the row wrapper
+        const div = document.createElement('div');
+        div.className = 'file-group';
+
+        // Create the file input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'input_name[]'; // Using array notation for the server
+        input.required = true;
+
+        const label1 = document.createElement("label");
+        label1.innerText = "featureName :";
+
+        const select = document.createElement('select');
+        select.name = 'data_type[]'; // Array notation for the server
+        select.required = true;
+
+        // 2. Define the options we want
+        const options = ['Integer', 'Float', 'String'];
+
+        // 3. Loop through and create option tags
+        options.forEach(optText => {
+            const option = document.createElement('option');
+            option.value = optText.toLowerCase(); // value sent to server (e.g., "integer")
+            option.textContent = optText;         // text shown to user (e.g., "Integer")
+            select.appendChild(option);
+        });
+
+        const label2 = document.createElement("label");
+        label1.innerText = "featureType :";
+
+        // Create the delete button
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerText = 'Delete';
+        
+
+
+        removeBtn.onclick = function() {
+            container.removeChild(div);
+        };
+
+        // Assemble and append
+        div.appendChild(label1);
+        div.appendChild(input);
+        div.appendChild(select)
+        div.appendChild(removeBtn);
+        container.appendChild(div);
+    }
+
+    const heartData = [
+    { id: 1, age: 63, sex: "Male", fbs: "True", restecg: "Normal", exang: "No", oldpeak: 2.3, cp: "Typical", chol: 233, trestbps: 145, slope: "Down", ca: 0, thal: "Fixed", target: "Yes", pred_target: "Yes", valid: true },
+    { id: 2, age: 37, sex: "Male", fbs: "False", restecg: "ST-T", exang: "No", oldpeak: 3.5, cp: "Asymptomatic", chol: 250, trestbps: 130, slope: "Down", ca: 0, thal: "Normal", target: "Yes", pred_target: "No", valid: false },
+    // ... add more objects here
+    ];
+
+    let currentPage = 1;
+    const rowsPerPage = 5;
+
+    function renderTable() {
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const paginatedData = heartData.slice(start, end);
+
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = paginatedData.map(row => `
+        <tr>
+        <td>${row.id}</td>
+        <td>${row.age}</td>
+        <td>${row.sex}</td>
+        <td>${row.fbs}</td>
+        <td>${row.restecg}</td>
+        <td>${row.exang}</td>
+        <td>${row.oldpeak}</td>
+        <td>${row.cp}</td>
+        <td>${row.chol}</td>
+        <td>${row.trestbps}</td>
+        <td>${row.slope}</td>
+        <td>${row.ca}</td>
+        <td>${row.thal}</td>
+        <td><strong>${row.target}</strong></td>
+        <td>${row.pred_target}</td>
+        <td>${row.valid ? '✅' : '❌'}</td>
+        </tr>
+    `).join('');
+
+    updateButtons();
+    }
+
+    function updateButtons() {
+    document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${Math.ceil(heartData.length / rowsPerPage)}`;
+    document.getElementById("prevBtn").disabled = currentPage === 1;
+    document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= heartData.length;
+    }
+
+    function nextPage() { currentPage++; renderTable(); }
+    function prevPage() { currentPage--; renderTable(); }
+
+    // Initial load
+    renderTable();
+
+</script>
+
+</body>
+</html>

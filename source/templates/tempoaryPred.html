@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tempoary</title>
+</head>
+<body>
+    <div id="container">
+        <form>
+                <select id="selected">
+                    <option> None </option>
+                    {% for model,feature in features.items() %}
+                    <!-- <label>{{ feature.name }}</label>
+                    <input type="text" name={{ feature.name }}>
+                    <label>{{ feature.type }}</label>
+                    <input type="text" name={{ feature.type }}> -->
+                    <option>{{ model }}</option>
+                    {% endfor %}
+                </select>
+                {% for model,feature in features.items() %}
+                    <!-- <label>{{ feature.name }}</label>
+                    <input type="text" name={{ feature.name }}>
+                    <label>{{ feature.type }}</label>
+                    <input type="text" name={{ feature.type }}> -->
+                    <option>{{ model }}</option>
+                {% endfor %}
+        </form>
+    </div>
+    <form action="/checkstats" method="POST" enctype="multipart/form-data" id="post_feature">
+        <div id="feature_container">
+
+        </div>
+        <button>
+            submit
+        </button>
+    </form>
+
+</body>
+<script>
+    const container = document.getElementById('container');
+    const obj = {{ features|tojson  }};
+    const selectElement = document.getElementById("selected");
+    const featureContainer = document.getElementById("feature_container");
+    var selected;
+
+    selectElement.addEventListener("change", (event) => {
+        featureContainer.innerHTML = ""
+        const selectedValue = event.target.value;
+        if (selectedValue != "None"){
+            selected = selectedValue;
+            array = obj[selectedValue];
+            array["features"].forEach(element => {
+            const inputField = document.createElement("input")
+            inputField.name = element["name"]
+            inputField.type = element["type"]
+            const text = document.createElement("label")
+            text.innerText = element["name"]
+            featureContainer.appendChild(text)
+            featureContainer.appendChild(inputField)
+        });
+        }
+        
+    });
+
+    const formID = document.getElementById("post_feature");
+    
+    formID.addEventListener('submit',(event) =>{
+        event.preventDefault();
+        formData = new FormData(formID);
+        formData.append("model",selectElement.value)
+        jsonData = JSON.stringify(Object.fromEntries(formData))
+        fetch('/checkstats',{
+            method:'POST',
+            headers:{
+                'Content-Type': 'application/json',
+            },
+            body: jsonData
+        }).then(
+            response => response.json()
+        ).then(data => {
+            const textChild = document.createElement("h1");
+            textChild.innerText = data["result"];
+            console.log(data["result"]);
+            container.appendChild(textChild);
+        })
+    })
+
+</script>
+</html>
