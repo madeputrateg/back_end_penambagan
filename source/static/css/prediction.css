@@ -536,3 +536,97 @@ body {
         width: 100%;
     }
 }
+
+.dropdown-container {
+    width: 100%;
+    max-width: 800px; /* Limits width on very large screens for readability */
+    position: relative;
+    user-select: none;
+}
+
+/* The Header / Trigger */
+.dropdown-trigger {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 18px 25px;
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: 0 10px 20px rgba(106, 90, 249, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.dropdown-trigger:active {
+    transform: scale(0.99);
+}
+
+/* Arrow Icon */
+.arrow {
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 4px;
+    transform: rotate(45deg);
+    transition: transform 0.3s ease;
+}
+
+.dropdown-container.open .arrow {
+    transform: rotate(-135deg);
+}
+
+/* The Menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: 100%;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: none; /* Hidden by default */
+    z-index: 10;
+}
+
+.dropdown-container.open .dropdown-menu {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Options styling */
+.dropdown-item {
+    padding: 15px 25px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f0ff;
+    color: #6a5af9;
+}
+
+/* Header inside the dropdown (like "Eclons" in your image) */
+.dropdown-header {
+    padding: 15px 25px 10px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #aaa;
+    font-weight: 700;
+    background: #fafafa;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

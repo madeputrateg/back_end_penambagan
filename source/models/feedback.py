@@ -1,6 +1,8 @@
 from database.db import db
+from sqlalchemy_serializer import SerializerMixin
 
-class feedback(db.Model):
+
+class feedback(db.Model,SerializerMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     age = db.Column(db.Integer, nullable=True)
     sex = db.Column(db.String(10), nullable=True)

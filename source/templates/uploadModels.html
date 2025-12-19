@@ -180,11 +180,7 @@
         container.appendChild(div);
     }
 
-    const heartData = [
-    { id: 1, age: 63, sex: "Male", fbs: "True", restecg: "Normal", exang: "No", oldpeak: 2.3, cp: "Typical", chol: 233, trestbps: 145, slope: "Down", ca: 0, thal: "Fixed", target: "Yes", pred_target: "Yes", valid: true },
-    { id: 2, age: 37, sex: "Male", fbs: "False", restecg: "ST-T", exang: "No", oldpeak: 3.5, cp: "Asymptomatic", chol: 250, trestbps: 130, slope: "Down", ca: 0, thal: "Normal", target: "Yes", pred_target: "No", valid: false },
-    // ... add more objects here
-    ];
+    const heartData = {{ feedbacksResult|tojson }};
 
     let currentPage = 1;
     const rowsPerPage = 5;

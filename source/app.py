@@ -21,6 +21,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #file_upload_path
 app.config["UPLOAD_FOLDER"] = "E:\\tugas_uas_penambangan_data\\source\\upload"
+db.init_app(app)
+with app.app_context():
+    try:
+        db.create_all()
+        print("Database tables initialized successfully!")
+    except Exception as e:
+        print(f"Error creating database: {e}")
 SWAPPER = modelSwapper.modelSwapper(save_route=app.config["UPLOAD_FOLDER"])
 
 
@@ -60,7 +67,8 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return f"Hello {current_user.username}! <a href='/logout'>Logout</a>"
+    feedbacks = list(map(lambda x: x.to_dict(),feedbackRepository.get_all_feedback()))
+    return render_template(template_name_or_list="uploadModels.html",feedbacksResult = feedbacks)
 
 # --- AUTHORIZATION EXAMPLE ---
 @app.route('/admin')
@@ -78,8 +86,9 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/upload',methods=['GET','POST'])
+@login_required
 def upload_model():
-    feedbacks = feedbackRepository.get_all_feedback()
+    # feedbacks = list(map(lambda x: x.to_dict(),feedbackRepository.get_all_feedback()))
     if request.method == 'POST':
         # if 'file' not in request.files:
         #     flash('No file part')
@@ -106,15 +115,16 @@ def upload_model():
             print(err)
         
             
-    return render_template(template_name_or_list="uploadModels.html")
+    return redirect(url_for("dashboard"))
 
-@app.route('/getModel',methods=['GET','POST'])
+@app.route('/test',methods=['GET','POST'])
 def allModel():
     if request.method == "POST":
         name = request.form["class"]
         model = SWAPPER.getModel(name=name)
         return "success"
-    return '''<form method="post"><input type="text" name="class"><button>test</button></form>'''
+    keys = SWAPPER.getModelKeys()
+    return render_template("getprediction.html")
 
 @app.route('/checkstats',methods=['GET','POST'])
 def checkstats():
@@ -122,7 +132,7 @@ def checkstats():
         jsonData = request.get_json()
         model = SWAPPER.getLoadedModel(jsonData["model"])
         result = model.predict(jsonData)
-        jsonData["target_pred"] = result
+        jsonData["pred_target"] = result
         feedbackRepository.insert_feedback_json(jsonData)
         return jsonify({"result":result})
     obj = {}
@@ -138,8 +148,8 @@ def checkstats():
 
 if __name__ == '__main__':
 
-    db.init_app(app)
-    with app.app_context():
+    
+    with app.app_context(): 
         SWAPPER.loadSavedModel()
         try:
             db.create_all()

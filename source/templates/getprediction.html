@@ -8,7 +8,20 @@
   </head>
   <body>
     <div class="background-pattern"></div>
-
+     <div class="dropdown-container" id="myDropdown">
+          <div class="dropdown-trigger">
+              <span id="selected-text">Select Option</span>
+              <i class="arrow"></i>
+          </div>
+          <div class="dropdown-menu">
+              <div class="dropdown-header">Categories</div>
+              <div class="dropdown-item" data-value="option1">Option 1</div>
+              <div class="dropdown-item" data-value="option2">Option 2</div>
+              <div class="dropdown-item" data-value="option3">Option 3</div>
+              <div class="dropdown-header">Advanced</div>
+              <div class="dropdown-item" data-value="long-option">Longer Option Name</div>
+          </div>
+      </div>
     <div class="container">
       <div class="header">
         <div class="header-content">
@@ -43,7 +56,7 @@
 
         <form id="heartForm" onsubmit="handleSubmit(event)">
           <div class="form-grid">
-            <div class="form-group">
+            <div class="form-group age" style="visibility: hidden;">
               <label for="age">
                 <span class="label-icon">👤</span>
                 Age
@@ -53,7 +66,7 @@
               <div class="error-message" id="age-error"></div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group sex" style="visibility: hidden;">
               <label>
                 <span class="label-icon">⚧</span>
                 Sex
@@ -76,7 +89,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group cp" style="visibility: hidden;">
               <label for="cp">
                 <span class="label-icon">💔</span>
                 Chest Pain Type
@@ -90,7 +103,7 @@
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group trestbps" style="visibility: hidden;">
               <label for="trestbps">
                 <span class="label-icon">🩺</span>
                 Resting Blood Pressure
@@ -99,7 +112,7 @@
               <input type="number" id="trestbps" name="trestbps" min="94" max="200" required class="modern-input" />
             </div>
 
-            <div class="form-group">
+            <div class="form-group chol" style="visibility: hidden;">
               <label for="chol">
                 <span class="label-icon">🧪</span>
                 Serum Cholesterol
@@ -108,7 +121,7 @@
               <input type="number" id="chol" name="chol" min="126" max="564" required class="modern-input" />
             </div>
 
-            <div class="form-group">
+            <div class="form-group fbs" style="visibility: hidden;">
               <label>
                 <span class="label-icon">🍬</span>
                 Fasting Blood Sugar
@@ -132,7 +145,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group restecg" style="visibility: hidden;">
               <label for="restecg">
                 <span class="label-icon">📊</span>
                 Resting ECG Results
@@ -145,7 +158,7 @@
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group thalach" style="visibility: hidden;">
               <label for="thalach">
                 <span class="label-icon">💗</span>
                 Max Heart Rate
@@ -154,7 +167,7 @@
               <input type="number" id="thalach" name="thalach" min="71" max="202" required class="modern-input" />
             </div>
 
-            <div class="form-group">
+            <div class="form-group exang" style="visibility: hidden;">
               <label>
                 <span class="label-icon">🏃</span>
                 Exercise Induced Angina
@@ -177,7 +190,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group oldpeak" style="visibility: hidden;">
               <label for="oldpeak">
                 <span class="label-icon">📉</span>
                 ST Depression
@@ -186,7 +199,7 @@
               <input type="number" id="oldpeak" name="oldpeak" min="0" max="6.2" step="0.1" required class="modern-input" />
             </div>
 
-            <div class="form-group">
+            <div class="form-group slope" style="visibility: hidden;">
               <label for="slope">
                 <span class="label-icon">📈</span>
                 ST Segment Slope
@@ -199,7 +212,7 @@
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group ca" style="visibility: hidden;">
               <label for="ca">
                 <span class="label-icon">🔬</span>
                 Major Vessels
@@ -208,7 +221,7 @@
               <input type="number" id="ca" name="ca" min="0" max="3" required class="modern-input" />
             </div>
 
-            <div class="form-group full-width">
+            <div class="form-group full-width thal" style="visibility: hidden;">
               <label for="thal">
                 <span class="label-icon">🧬</span>
                 Thalassemia Status
@@ -251,7 +264,7 @@
             <span class="score-value" id="scoreValue"></span>
           </div>
         </div>
-
+        
         <div class="disclaimer">
           <svg class="disclaimer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10" />
@@ -263,8 +276,63 @@
           </div>
         </div>
       </div>
+        
     </div>
-
-    <script src="script.js"></script>
+   
+    
   </body>
+  <script >
+    function handleLogin() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      form = new FormData();
+      form.append("username",username);
+      form.append("password",password);
+      // if (username && password) {
+      //   alert("✓ Login successful! Welcome, " + username);
+      // } else {
+      //   alert("⚠ Please enter both username and password");
+      // }
+      fetch("/login",{
+        method: "POST",
+        headers:{
+          'Content_type':"multipart/form-data"
+        },
+        body: form
+      }).then(res =>{
+          console.log(res)
+          if(res.url){
+            window.location.href = res.url
+          }
+        }  
+      )
+    } 
+    const heartForm = document.getElementById("heartForm")
+    // const allId = heartForm
+    const dropdown = document.getElementById('myDropdown');
+    const trigger = dropdown.querySelector('.dropdown-trigger');
+    const items = dropdown.querySelectorAll('.dropdown-item');
+    const selectedText = document.getElementById('selected-text');
+
+    // Toggle Menu
+    trigger.addEventListener('click', () => {
+        dropdown.classList.toggle('open');
+    });
+
+    // Handle Selection
+    items.forEach(item => {
+        item.addEventListener('click', () => {
+            selectedText.innerText = item.innerText;
+            dropdown.classList.remove('open');
+            console.log("Selected value:", item.getAttribute('data-value'));
+        });
+    });
+
+    // Close if clicked outside
+    window.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+  </script>
 </html>

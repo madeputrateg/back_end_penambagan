@@ -4,7 +4,7 @@ from models.feedback import feedback
 class feedbackRepository():
 
     @classmethod
-    def get_all_feedback():
+    def get_all_feedback(cls):
         return feedback.query.all()
 
     @classmethod
@@ -53,7 +53,7 @@ class feedbackRepository():
         return new_feedback
     
     @classmethod
-    def insert_feedback_json(self,data):
+    def insert_feedback_json(cls,data):
         """
         Takes a dictionary of data, creates a new feedback object,
         saves it to the database, and returns the created object.
