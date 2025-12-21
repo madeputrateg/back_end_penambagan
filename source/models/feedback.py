@@ -14,8 +14,10 @@ class feedback(db.Model,SerializerMixin):
     chol = db.Column(db.Integer, nullable=True)
     slope = db.Column(db.String(50), nullable=True)
     ca = db.Column(db.Integer, nullable=True)
-    target = db.Column(db.String(50), nullable=True)
-    thal = db.Column(db.String(50), nullable=True)  # Assuming 'that' in diagram was 'thal' (common in heart datasets)
-    pred_target = db.Column(db.String(50), nullable=True)
+    
+    thal = db.Column(db.String(50), nullable=True) 
+    
     trestbps = db.Column(db.Integer, nullable=True)
+    pred_target = db.Column(db.String(50), nullable=True)
+    target = db.Column(db.String(50), nullable=True)
     valid = db.Column(db.Boolean)

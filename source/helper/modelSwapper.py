@@ -99,6 +99,13 @@ class modelSwapper():
             return self.model_loaded[name]
         else:
             print("model don't exist in the swapper map")
+
+    def getAllModelAndFeature(self):
+        keys = self.getModelKeys()
+        modelAndFeature = {}
+        for modelName in keys:
+            modelAndFeature[modelName] = self.model_mapper[modelName].features
+        return modelAndFeature
     
     def initializedModel(self,class_name,features,pickle,class_model):
         #pickle_path

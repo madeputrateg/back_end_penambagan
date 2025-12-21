@@ -2,10 +2,10 @@ from flask import Flask, render_template, redirect, url_for, request, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import user,model_feature, model,feedback
+from models import user,model_feature, model,feedback, session
 from database.db import db
 from werkzeug.utils import secure_filename
-from helper import modelSwapper
+from helper import modelSwapper,util
 from repository.feedback import feedbackRepository
 import json
 import os
@@ -68,16 +68,10 @@ def login():
 @login_required
 def dashboard():
     feedbacks = list(map(lambda x: x.to_dict(),feedbackRepository.get_all_feedback()))
-    return render_template(template_name_or_list="uploadModels.html",feedbacksResult = feedbacks)
+    return render_template(template_name_or_list="uploadModels.jinja",feedbacksResult = feedbacks)
 
 # --- AUTHORIZATION EXAMPLE ---
-@app.route('/admin')
-@login_required
-def admin_panel():
-    # Simple Authorization Check
-    if current_user.role != 'admin':
-        return "Access Denied: Admins only!", 403
-    return "Welcome to the Admin Panel!"
+
 
 @app.route('/logout')
 @login_required
@@ -117,33 +111,50 @@ def upload_model():
             
     return redirect(url_for("dashboard"))
 
-@app.route('/test',methods=['GET','POST'])
+@app.route('/checkheart',methods=['GET','POST'])
 def allModel():
-    if request.method == "POST":
-        name = request.form["class"]
-        model = SWAPPER.getModel(name=name)
-        return "success"
-    keys = SWAPPER.getModelKeys()
-    return render_template("getprediction.html")
-
-@app.route('/checkstats',methods=['GET','POST'])
-def checkstats():
+    all_model = SWAPPER.getAllModelAndFeature()
     if request.method == "POST":
         jsonData = request.get_json()
         model = SWAPPER.getLoadedModel(jsonData["model"])
         result = model.predict(jsonData)
         jsonData["pred_target"] = result
-        feedbackRepository.insert_feedback_json(jsonData)
+        # feedbackRepository.insert_feedback_json(jsonData)
         return jsonify({"result":result})
-    obj = {}
-    keys = SWAPPER.getModelKeys()
-    for key in keys:
-        modelAbs = SWAPPER.getModel(key)
-        features = list(map(lambda x : {"name":x[0],"type":x[1]},modelAbs.features))
-        obj[key] = {
-           "features" : features
-        }
-    return render_template(template_name_or_list = "tempoaryPred.html",features=obj,objstring=json.dumps(obj))
+    return render_template("getprediction.jinja",all_model = all_model)
+
+@app.route("/feedback",methods = ["POST"])
+def postFeedback():
+    if request.method == "POST":
+        jsonData = request.get_json()
+        keys = SWAPPER.getModelKeys()
+        if not (jsonData["model"] in keys):
+            print("model not found")
+            return 
+        model = SWAPPER.getModel(jsonData["model"])
+        print(jsonData)
+        filtered_feedback = util.filter_features_by_type(jsonData,model.features)
+        feedbackRepository.insert_feedback_json(filtered_feedback)
+        return jsonify({"result":"success"})
+
+# @app.route('/checkstats',methods=['GET','POST'])
+# def checkstats():
+#     if request.method == "POST":
+#         jsonData = request.get_json()
+#         model = SWAPPER.getLoadedModel(jsonData["model"])
+#         result = model.predict(jsonData)
+#         jsonData["pred_target"] = result
+#         # feedbackRepository.insert_feedback_json(jsonData)
+#         return jsonify({"result":result})
+#     # obj = {}
+#     # keys = SWAPPER.getModelKeys()
+#     # for key in keys:
+#     #     modelAbs = SWAPPER.getModel(key)
+#     #     features = list(map(lambda x : {"name":x[0],"type":x[1]},modelAbs.features))
+#     #     obj[key] = {
+#     #        "features" : features
+#     #     }
+#     return render_template(template_name_or_list = "tempoaryPred.jinja",features=obj,objstring=json.dumps(obj))
 
 
 if __name__ == '__main__':
