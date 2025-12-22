@@ -439,3 +439,47 @@ tbody tr:hover {
     padding: 12px 8px;
   }
 }
+
+.model-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.features-section {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+}
+
+.feature-type {
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  min-width: 120px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-family: inherit;
+}
+
+.form-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.form-actions .submit-btn {
+  max-width: 300px;
+}

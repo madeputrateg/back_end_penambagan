@@ -2,11 +2,14 @@ from flask import Flask, render_template, redirect, url_for, request, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import user,model_feature, model,feedback, session
+from models import user,model_feature, model,feedback, session, feedback_input_target
 from database.db import db
 from werkzeug.utils import secure_filename
 from helper import modelSwapper,util
 from repository.feedback import feedbackRepository
+from repository.model import modelRepository
+from repository.feedback_input_target import APIrepoFeedbackTarget
+from repository.user import APIrepouser
 import json
 import os
 
@@ -48,7 +51,7 @@ def load_user(user_id):
 def register():
     if request.method == 'POST':
         hashed_pw = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
-        new_user = user.Userauth(username=request.form['username'], password=hashed_pw, role='user')
+        new_user = user.Userauth(username=request.form['username'], password=hashed_pw)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -60,7 +63,7 @@ def login():
         current_user = user.Userauth.query.filter_by(username=request.form['username']).first()
         if current_user and check_password_hash(current_user.password, request.form['password']):
             login_user(current_user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboardV2'))
         flash('Invalid credentials')
     return '''<form method="post">User: <input name="username"><br>Pass: <input name="password" type="password"><br><button>Login</button></form>'''
 
@@ -77,7 +80,7 @@ def dashboard():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('checkHeart'))
 
 @app.route('/upload',methods=['GET','POST'])
 @login_required
@@ -87,6 +90,7 @@ def upload_model():
         # if 'file' not in request.files:
         #     flash('No file part')
         #     return redirect(request.url)
+        print(request.files)
         python_file = request.files['python']
         pickle_file = request.files['pickle']
         class_name = request.form["class"]
@@ -109,10 +113,10 @@ def upload_model():
             print(err)
         
             
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("dashboardV2"))
 
 @app.route('/checkheart',methods=['GET','POST'])
-def allModel():
+def checkHeart():
     all_model = SWAPPER.getAllModelAndFeature()
     if request.method == "POST":
         jsonData = request.get_json()
@@ -131,11 +135,41 @@ def postFeedback():
         if not (jsonData["model"] in keys):
             print("model not found")
             return 
+        
         model = SWAPPER.getModel(jsonData["model"])
+        modelloaded = SWAPPER.getLoadedModel(jsonData["model"])
         print(jsonData)
         filtered_feedback = util.filter_features_by_type(jsonData,model.features)
-        feedbackRepository.insert_feedback_json(filtered_feedback)
+        target = jsonData["target"]
+        pred_target = jsonData["pred_target"]
+        input_target = APIrepoFeedbackTarget.insertFeedback_target(target=str(target),pred_target=str(pred_target),model_id=model.model_id)
+        feedbackRepository.insert_feedback_json_serial(filtered_feedback,modelloaded.map_features_id,input_target.id)
         return jsonify({"result":"success"})
+
+@app.route("/dashboardv2",methods = ["POST","GET"])
+@login_required
+def dashboardV2():
+    if request.method == "POST":
+        pass
+    users = APIrepouser.getAllUserDict()
+    modelAPI = modelRepository()
+    feedbacks = modelAPI.get_all_model_feature_and_feedback()
+    return render_template("admin.jinja",feedbacks = feedbacks,users ={"result": users})
+
+@app.route("/adduser",methods = ["POST","GET"])
+def adduser():
+    jsondata = request.get_json()
+    hashed_pw = generate_password_hash(jsondata['password'], method='pbkdf2:sha256')
+    new_user = user.Userauth(username=jsondata['username'], password=hashed_pw)
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify(new_user.to_dict())
+
+@app.route("/verifyfeed",methods=["UPDATE"])
+def verifyFeedback():
+    jsondata = request.get_json()
+    APIrepoFeedbackTarget.update_feedback_validation(jsondata["input_id"])
+    return jsonify({"result":"success"})
 
 # @app.route('/checkstats',methods=['GET','POST'])
 # def checkstats():
@@ -163,6 +197,7 @@ if __name__ == '__main__':
     with app.app_context(): 
         SWAPPER.loadSavedModel()
         try:
+            # db.drop_all()
             db.create_all()
             print("Database tables initialized successfully!")
         except Exception as e:

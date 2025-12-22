@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
 from repository.model import modelRepository
+from repository.model_feature import RepositoryFeatureModelAPI
 import os
 import pickle
 import importlib
@@ -9,10 +10,11 @@ import sys
 import __main__
 
 class modelStract():
-    def __init__(self,model_path,class_name,model_pickle_path,features):
+    def __init__(self,model_path,class_name,model_pickle_path,features,model_id):
         self.model_path = model_path
         self.class_name = class_name
         self.model_pickle_path = model_pickle_path
+        self.model_id = model_id
         #name,type
         self.__features = features
     @property
@@ -21,7 +23,7 @@ class modelStract():
 
 
 class modelLoaded():
-    def __init__(self,class_name,class_path,pkl_path,features):
+    def __init__(self,class_name,class_path,pkl_path,features,model_id):
         spec = importlib.util.spec_from_file_location(class_name, class_path)
 
         module = importlib.util.module_from_spec(spec)
@@ -31,6 +33,8 @@ class modelLoaded():
         spec.loader.exec_module(module)
 
         self.features = features
+        self.model_id = model_id
+        # self.features_id = {}
         try:
             class_obj = getattr(module, class_name)
             setattr(__main__, class_name, class_obj)
@@ -38,6 +42,15 @@ class modelLoaded():
             print(f"Error: Class '{class_name}' not found in {class_path}")
         with open(pkl_path,'rb') as f:
             self.model = pickle.load(f)
+        self.initializedMapFeatureId()
+
+    
+    def initializedMapFeatureId(self):
+        features = RepositoryFeatureModelAPI.get_model_feature(self.model_id)
+        self.map_features_id = {}
+        for feature in features:
+            self.map_features_id[feature.feature_name] = feature.id
+
     
     def predict(self,x:dict):
         inputDict = {}
@@ -77,13 +90,14 @@ class modelSwapper():
         for key in dictOfAllModel:
             file_loc = dictOfAllModel[key]["model"].file_location
             name = dictOfAllModel[key]["model"].name
+            model_id = dictOfAllModel[key]["model"].id
             features = []
             for feature in dictOfAllModel[key]["features"]:
                 features.append((feature.feature_name,feature.feature_type))
             python_path = os.path.join(self.route_model,file_loc + ".py")
             pkl_path = os.path.join(self.route_model,file_loc + ".pkl")
-            self.model_loaded[name] = modelLoaded(name,python_path,pkl_path,features)
-            self.model_mapper[name] = modelStract(python_path,name,pkl_path,features)
+            self.model_loaded[name] = modelLoaded(name,python_path,pkl_path,features,model_id=model_id)
+            self.model_mapper[name] = modelStract(python_path,name,pkl_path,features,model_id=model_id)
     
     def getModel(self,name) -> Optional[modelStract] :
         if name in self.model_mapper.keys():
@@ -119,9 +133,9 @@ class modelSwapper():
         class_model.save(class_path)
         pickle.save(pickel_path)
         # modelRepository.Repository.insert_new_model(uuid_unique,class_name)
-        model = modelRepository()
-        model.insert_new_model(uuid_unique,class_name,features)
-        self.model_loaded[class_name] = modelLoaded(class_name,class_path,pickel_path,features)
-        self.model_mapper[class_name] = modelStract(class_path,class_name,pickel_path,features)
+        modelRepoAPI = modelRepository()
+        modelData = modelRepoAPI.insert_new_model(uuid_unique,class_name,features)
+        self.model_loaded[class_name] = modelLoaded(class_name,class_path,pickel_path,features,model_id=modelData.id)
+        self.model_mapper[class_name] = modelStract(class_path,class_name,pickel_path,features,model_id=modelData.id)
         return "success"
 

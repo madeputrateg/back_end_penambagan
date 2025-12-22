@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard - Heart Disease Checker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/prediction.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
   </head>
   <body>
     <div class="dashboard-container">
@@ -14,7 +14,9 @@
           <span>🏥</span>
           Admin Dashboard
         </h1>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+        <form>
+          <button class="logout-btn" onclick="logout()">Logout</button>
+        </form>
       </div>
 
       <!-- Stats -->
@@ -51,30 +53,51 @@
       <!-- Features Management -->
       <div class="section">
         <div class="section-header">
-          <h2>📋 Features Management</h2>
-          <button class="add-btn" onclick="openFeatureModal()">
-            <span>+</span>
-            Add Feature
-          </button>
+          <h2>🤖 Model Management</h2>
         </div>
-        <div class="table-container">
-          <table id="featuresTable">
-            <thead>
-              <tr>
-                <th>Class Name</th>
-                <th>Features</th>
-                <th>Data Types</th>
-                <th>Files</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="featuresTableBody">
-              <!-- Data will be inserted here -->
-            </tbody>
-          </table>
-        </div>
+        
+        <form id="modelForm" method="POST" action="/upload" enctype="multipart/form-data" class="model-form-container">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="class">Class Name *</label>
+              <input type="text" name="class" placeholder="e.g., HeartDiseaseModel" required />
+            </div>
+
+            <div class="form-group">
+              <label for="python">Upload Python Script (.py) *</label>
+              <input type="file" name="python" accept=".py" required />
+            </div>
+
+            <div class="form-group">
+              <label for="pickle">Upload Model File (.pkl) *</label>
+              <input type="file" name="pickle" accept=".pkl" required />
+            </div>
+          </div>
+
+          <div class="features-section">
+            <label>Model Features *</label>
+            <div id="dynamicFeaturesContainer" class="dynamic-fields">
+              <div class="dynamic-field">
+                <input type="text" name="input_name[]" placeholder="Feature Name" class="feature-name" required />
+                <select name="data_type[]" class="feature-type">
+                  <option value="integer">Integer</option>
+                  <option value="float">Float</option>
+                  <option value="string">String</option>
+                </select>
+                <button type="button" class="remove-field-btn" onclick="removeField(this)">−</button>
+              </div>
+            </div>
+            <button type="button" class="add-field-btn" onclick="addFeatureField()">
+              <span>+</span> Add Feature
+            </button>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">Save & Deploy Model</button>
+          </div>
+        </form>
       </div>
+
 
       <!-- Users Management -->
       <div class="section">
@@ -89,11 +112,9 @@
           <table id="usersTable">
             <thead>
               <tr>
+                <th>id</th>
                 <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Date Added</th>
-                <th>Actions</th>
+                <th>Password</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
@@ -107,19 +128,29 @@
       <div class="section">
         <div class="section-header">
           <h2>💬 Feedback Management</h2>
+          <div class="filter-group">
+            <label for="modelFilter" style="font-size: 14px; margin-right: 8px;">Filter by Model:</label>
+            <select id="modelFilter" class="filter-select">
+              <option value="all">All Models</option>
+              {% for id,value in feedbacks.items() %}
+                <option value="{{id}}">{{value["name"]}}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
         <div class="table-container">
           <table id="feedbackTable">
             <thead>
-              <tr>
-                <th>Date</th>
+              <tr id="headOfTableFeedback">
+                {# <th>Date</th>
                 <th>Model Used</th>
                 <th>Prediction</th>
                 <th>Feedback</th>
                 <th>Correct Diagnosis</th>
-                <th>Actions</th>
+                <th>Actions</th> #}
               </tr>
             </thead>
+            
             <tbody id="feedbackTableBody">
               <!-- Data will be inserted here -->
             </tbody>
@@ -194,18 +225,13 @@
         </div>
         <form id="userForm" onsubmit="submitUser(event)">
           <div class="form-group">
-            <label for="userName">Name *</label>
-            <input type="text" id="userName" required />
+            <label for="username">Name *</label>
+            <input type="text" id="username" name="username" required />
           </div>
 
           <div class="form-group">
-            <label for="userEmail">Email *</label>
-            <input type="email" id="userEmail" required />
-          </div>
-
-          <div class="form-group">
-            <label for="userRole">Role *</label>
-            <input type="text" id="userRole" required placeholder="e.g., Admin, Doctor, Analyst" />
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password" required />
           </div>
 
           <div class="modal-actions">
@@ -216,6 +242,185 @@
       </div>
     </div>
 
-    <script src="admin-script.js"></script>
+    <script>
+
+      const feedbacks = {{ feedbacks|tojson }}
+      const users = {{ users|tojson }}
+      const headOFTable = document.getElementById("headOfTableFeedback")
+      const feedbackTableBody = document.getElementById("feedbackTableBody")
+      const modelFilter = document.getElementById("modelFilter")
+      const usersTableBody = document.getElementById("usersTableBody")
+
+
+      users["result"].forEach((value)=>{
+        addUserTable(value);
+      })
+      modelFilter.addEventListener('change',(e)=>{
+        
+        onChangeOfModel(e)
+      })
+
+      function addUserTable(value){
+        const newRow = document.createElement("tr");
+        const newID = document.createElement("th");
+        const newUsername = document.createElement("th");
+        const newPassword = document.createElement("th");
+        newID.innerText = value.id;
+        newUsername.innerText = value.username;
+        newPassword.innerText = value.password;
+        newRow.append(newID);
+        newRow.append(newUsername);
+        newRow.append(newPassword);
+        usersTableBody.append(newRow);
+      }
+
+      function onChangeOfModel(e){
+        const valueFilter = String(e.target.value);
+        headOFTable.innerHTML = "";
+        feedbackTableBody.innerHTML = "";
+        const featureOfModel = feedbacks[valueFilter]["feature"]
+        for (const [key, value] of Object.entries(featureOfModel)) {
+          headOFTable.innerHTML += "<th>" + value + "</th>";
+        }
+        headOFTable.innerHTML += "<th>" + "target" + "</th>";
+        headOFTable.innerHTML += "<th>" + "pred_target" + "</th>";
+        headOFTable.innerHTML += "<th>" + "valid" + "</th>";
+        const modelfeedback = feedbacks[valueFilter]["feedback"]
+        for (const [key, value] of Object.entries(modelfeedback)) {
+          const rowHTML = document.createElement("tr");
+          for (const [key1,value1] of Object.entries(value["feature"])){
+            const colHTML = document.createElement("th");
+            colHTML.innerHTML = value1;
+            rowHTML.append(colHTML);
+          }
+          const prop = value["property"];
+          const target_value = document.createElement("th");
+          const target_pred = document.createElement("th");
+          const validate = document.createElement("th");
+          target_value.innerText = prop["target"];
+          target_pred.innerText = prop["pred_target"];
+          if (prop["valid"]){
+            validate.innerText = "true";
+          }else{
+            validate.innerText = "false";
+            validate.onclick = (e)=>{
+              validateFeedback(key,validate)
+            }
+          }
+          rowHTML.append(target_value);
+          rowHTML.append(target_pred);
+          rowHTML.append(validate);
+          feedbackTableBody.append(rowHTML);
+        }
+
+      }
+
+
+      function addFeatureField() {
+          const container = document.getElementById('dynamicFeaturesContainer');
+          const newField = document.createElement('div');
+          newField.className = 'dynamic-field';
+          newField.innerHTML = `
+              <input type="text" name="input_name[]" placeholder="Feature Name" class="feature-name" required />
+              <select name="data_type[]" class="feature-type">
+                  <option value="integer">Integer</option>
+                  <option value="float">Float</option>
+                  <option value="string">String</option>
+              </select>
+              <button type="button" class="remove-field-btn" onclick="removeField(this)">−</button>
+          `;
+          container.appendChild(newField);
+      }
+
+      // Fungsi menghapus baris (sudah ada, tapi pastikan tersedia)
+      function removeField(button) {
+          const fields = button.parentElement.parentElement.querySelectorAll('.dynamic-field');
+          if (fields.length > 1) {
+              button.parentElement.remove();
+          } else {
+              alert("Minimal harus ada satu fitur.");
+          }
+      }
+
+      // Fungsi Submit Model
+      async function submitModel(event) {
+          event.preventDefault();
+          
+          const className = document.getElementById('modelClassName').value;
+          const pyFile = document.getElementById('pyFile').files[0];
+          const pklFile = document.getElementById('pklFile').files[0];
+          
+          // Mengambil data fitur-fitur
+          const featureElements = document.querySelectorAll('.dynamic-field');
+          const features = Array.from(featureElements).map(el => ({
+              name: el.querySelector('.feature-name').value,
+              type: el.querySelector('.feature-type').value
+          }));
+
+          console.log("Data Model Baru:", { className, pyFile, pklFile, features });
+          
+          // Logika pengiriman data ke backend (Flask/Django) menggunakan FormData
+          const formData = new FormData();
+          formData.append('class_name', className);
+          formData.append('py_file', pyFile);
+          formData.append('pkl_file', pklFile);
+          formData.append('features', JSON.stringify(features));
+
+          alert("Model sedang diproses dan diupload!");
+      }
+
+      // Fungsi Filter Feedback
+      function filterFeedbackByModel() {
+          const selectedModel = document.getElementById('modelFilter').value;
+          console.log("Memfilter feedback untuk model:", selectedModel);
+          // Logika fetch data tabel feedback berdasarkan filter di sini
+      }
+
+      function logout(){
+        fetch("/logout",{
+          method:"POST"
+        }).then(res => { 
+          if(res.url) window.location.href = res.url; 
+          });
+      }
+      function openUserModal() {
+        document.getElementById("userModal").classList.add("show");
+      }
+
+      function closeUserModal() {
+        document.getElementById("userModal").classList.remove("show");
+        document.getElementById("userForm").reset();
+      }
+
+      function submitUser(event) {
+        event.preventDefault();
+
+        const newUser = {
+          id: users["result"].length + 1,
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value,
+        };
+
+        users["result"].push(newUser);
+        fetch("/adduser",{
+          method:"POST",
+          headers:{ 'Content-Type': 'application/json' },
+          body:JSON.stringify(newUser)
+        }).then((res)=>res.json()).then((data)=>{
+          addUserTable(data);
+        })
+        closeUserModal();
+      }
+
+      function validateFeedback(input_id,elem){
+        fetch("/verifyfeed",{
+          method:"UPDATE",
+          headers:{'Content-Type': 'application/json'},
+          body: JSON.stringify({"input_id":input_id})
+        }).then((res)=>res.json()).then((data)=>{
+          if (data["result"]=="success")elem.innerText = "True";
+        })
+      }
+    </script>
   </body>
 </html>

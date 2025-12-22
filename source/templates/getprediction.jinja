@@ -251,11 +251,12 @@
 
         correctPredictionForm.addEventListener("submit",(e)=>{
           e.preventDefault();
-          true_target = document.getElementById("true_target_value").innerText;
+          true_target = document.getElementById("true_target_value").value;
           submitFeedback();
           correctPredictionForm.classList.remove("show");
           const resultSection = document.getElementById("resultSection");
           resultSection.classList.remove("show");
+          document.getElementById("feedbackSection").style.visibility = "hidden";
         })
 
         function showCorrectPredictionForm(e){
@@ -324,7 +325,7 @@
         function displayResult(score) {
             const resultSection = document.getElementById("resultSection");
             resultSection.classList.add("show");
-            scoreValue.textContent = `${score}/25`;
+            scoreValue.textContent = `${score}`;
             document.getElementById("feedbackSection").style.visibility = "visible";
             resultSection.scrollIntoView({ behavior: "smooth" });
         }

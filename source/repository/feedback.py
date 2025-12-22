@@ -1,5 +1,6 @@
 from database.db import db 
-from models.feedback import feedback
+from models.feedback import feedback, serializefeedback
+from uuid import uuid4
 
 class feedbackRepository():
 
@@ -79,3 +80,24 @@ class feedbackRepository():
         db.session.add(new_feedback)
         db.session.commit()
         return new_feedback
+    
+    @classmethod
+    def insert_feedback_json_serial(cls,data:dict,map_feature_id:dict,input_id:str):
+        for idx in data:
+            feature_id = map_feature_id[idx]
+            value = data[idx]
+            feedbackSerial = serializefeedback(
+                feature_id = feature_id,
+                value = str(value),
+                input_id =input_id
+            )
+            db.session.add(feedbackSerial)
+        db.session.commit()
+
+    @classmethod
+    def get_all_serialized_feedback(cls)->list[serializefeedback]:
+        return serializefeedback.query.all()
+    
+
+            
+
