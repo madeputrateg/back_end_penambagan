@@ -650,3 +650,29 @@ body {
     flex-direction: column;
   }
 }
+
+.field-disabled {
+    cursor: not-allowed !important;
+    opacity: 0.65;
+    pointer-events: none; 
+    user-select: none;   
+}
+
+.field-disabled .modern-input,
+.field-disabled .modern-select,
+.field-disabled .radio-content {
+    background-color: #e5e7eb !important; 
+    border-color: var(--border) !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+
+
+.field-disabled label {
+    color: var(--text-secondary) !important;
+}
+
+.field-disabled .radio-check {
+    border-color: var(--border) !important;
+    background-color: #f3f4f6 !important;
+}

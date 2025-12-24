@@ -1,6 +1,25 @@
 FROM python:3.11-slim
+
 WORKDIR /app
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+ENV UPLOAD_FOLDER=/app/uploads
+
+RUN mkdir -p /app/uploads
+RUN mkdir -p /app/uploads/machine_models
+
+RUN chmod 777 /app/uploads
+RUN chmod 777 /app/uploads/machine_models
+
 COPY . .
-CMD ["python", "app.py"]
+
+ENV PYTHONUNBUFFERED=TRUE
+
+# Expose the port Gunicorn will listen on
+EXPOSE 5000
+
+# Run Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app","--log-level debug"]
+# CMD ["python","app.py"]

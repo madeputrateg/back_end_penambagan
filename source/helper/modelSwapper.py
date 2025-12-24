@@ -63,11 +63,12 @@ class modelLoaded():
                 inputDict[name] = int(x[name])
             else :
                 inputDict[name] = x[name]
-        try:
-            return self.model.pred(inputDict)
-        except :
-            print("error running predict")
-            return "error"
+        return self.model.pred([inputDict])
+        # try:
+        #     return self.model.pred([inputDict])
+        # except :
+        #     print("error running predict")
+        #     return "error"
 
 
         

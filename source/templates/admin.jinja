@@ -14,9 +14,7 @@
           <span>🏥</span>
           Admin Dashboard
         </h1>
-        <form>
           <button class="logout-btn" onclick="logout()">Logout</button>
-        </form>
       </div>
 
       <!-- Stats -->
@@ -380,7 +378,7 @@
         fetch("/logout",{
           method:"POST"
         }).then(res => { 
-          if(res.url) window.location.href = res.url; 
+            if(res.url) window.location.href = res.url; 
           });
       }
       function openUserModal() {

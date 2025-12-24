@@ -1,0 +1,9 @@
+flask==3.1.1
+numpy==2.2.6
+Flask-Login==0.6.3
+SQLAlchemy==2.0.45
+sqlalchemy-serializer==1.5.4
+pandas==2.3.1
+Flask-SQLAlchemy==3.1.1
+scikit-learn==1.8.0
+gunicorn==23.0.0

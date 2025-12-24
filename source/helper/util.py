@@ -1,3 +1,4 @@
+import os
 def filter_features_by_type(source_dict, schema_list):
     """
     Creates a filtered dictionary based on a schema list of (name, type).
@@ -38,3 +39,19 @@ def filter_features_by_type(source_dict, schema_list):
                 continue
                 
     return cleaned_data
+
+# 'postgresql://postgres:password@localhost:5432/my_auth_db'
+
+class Congfi():
+    def __init__(self):
+        self.DBUSERNAME = os.getenv("POSTGRES_USER","postgres")
+        self.DBPASSWORD = os.getenv("DB_PASSWORD_FILE","password")
+        self.DBHOST = os.getenv("POSTGRES_HOST","localhost")
+        self.DBPORT = os.getenv("POSTGRES_PORT","5432")
+        self.DBDB = os.getenv("POSTGRES_DB","my_auth_db")
+    def createDatabaseUrl(self):
+        print("connecting to")
+        databaseUrl = "postgresql://{}:{}@{}:{}/{}".format(self.DBUSERNAME,self.DBPASSWORD,self.DBHOST,self.DBPORT,self.DBDB)
+        print(databaseUrl)
+        return databaseUrl
+CONF = Congfi()

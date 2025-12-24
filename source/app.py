@@ -10,30 +10,48 @@ from repository.feedback import feedbackRepository
 from repository.model import modelRepository
 from repository.feedback_input_target import APIrepoFeedbackTarget
 from repository.user import APIrepouser
-import json
+from helper.util import CONF
+import traceback
+import logging
+import sys
+import time
 import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
 ALLOWED_EXTENSIONS = {'py','pkl','txt'}
-
 # --- POSTGRES CONNECTION ---
 # Replace 'user', 'password', and 'my_auth_db' with your actual Postgres credentials
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password@localhost:5432/my_auth_db'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = CONF.createDatabaseUrl()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #file_upload_path
-app.config["UPLOAD_FOLDER"] = "E:\\tugas_uas_penambangan_data\\source\\upload"
-db.init_app(app)
-with app.app_context():
-    try:
-        db.create_all()
-        print("Database tables initialized successfully!")
-    except Exception as e:
-        print(f"Error creating database: {e}")
+app.config["UPLOAD_FOLDER"] = os.environ.get('UPLOAD_FOLDER', "E:\\tugas_uas_penambangan_data\\source\\upload")
+
 SWAPPER = modelSwapper.modelSwapper(save_route=app.config["UPLOAD_FOLDER"])
-
-
+with app.app_context():
+    print("trying to setup database")
+    tries = 10
+    db.init_app(app)
+    while tries>0:
+        try:
+            # Debug: Print all recognized table names
+            # print("Models detected:", db.metadata.tables.keys())
+            
+            print("Models detected:", db.metadata.tables.keys())
+            
+            db.create_all()
+            SWAPPER.loadSavedModel()
+            APIrepouser.initializeFirstUser()
+            print("Database tables initialized successfully!")
+            break
+        except Exception as e:
+            print("CRITICAL ERROR DURING INIT:")
+            print(e)
+            print(traceback.format_exc())
+            tries = tries - 1
+            time.sleep(10)
 
 login_manager = LoginManager(app)
 
@@ -47,15 +65,15 @@ def load_user(user_id):
 
 # --- ROUTES ---
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        hashed_pw = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
-        new_user = user.Userauth(username=request.form['username'], password=hashed_pw)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
-    return '''<form method="post">User: <input name="username"><br>Pass: <input name="password" type="password"><br><button>Reg</button></form>'''
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     if request.method == 'POST':
+#         hashed_pw = generate_password_hash(request.form['password'], method='pbkdf2:sha256')
+#         new_user = user.Userauth(username=request.form['username'], password=hashed_pw)
+#         db.session.add(new_user)
+#         db.session.commit()
+#         return redirect(url_for('login'))
+#     return '''<form method="post">User: <input name="username"><br>Pass: <input name="password" type="password"><br><button>Reg</button></form>'''
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -65,13 +83,13 @@ def login():
             login_user(current_user)
             return redirect(url_for('dashboardV2'))
         flash('Invalid credentials')
-    return '''<form method="post">User: <input name="username"><br>Pass: <input name="password" type="password"><br><button>Login</button></form>'''
+    return redirect(url_for('checkHeart'))
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    feedbacks = list(map(lambda x: x.to_dict(),feedbackRepository.get_all_feedback()))
-    return render_template(template_name_or_list="uploadModels.jinja",feedbacksResult = feedbacks)
+# @app.route('/dashboard')
+# @login_required
+# def dashboard():
+#     feedbacks = list(map(lambda x: x.to_dict(),feedbackRepository.get_all_feedback()))
+#     return render_template(template_name_or_list="uploadModels.jinja",feedbacksResult = feedbacks)
 
 # --- AUTHORIZATION EXAMPLE ---
 
@@ -90,7 +108,6 @@ def upload_model():
         # if 'file' not in request.files:
         #     flash('No file part')
         #     return redirect(request.url)
-        print(request.files)
         python_file = request.files['python']
         pickle_file = request.files['pickle']
         class_name = request.form["class"]
@@ -171,35 +188,16 @@ def verifyFeedback():
     APIrepoFeedbackTarget.update_feedback_validation(jsondata["input_id"])
     return jsonify({"result":"success"})
 
-# @app.route('/checkstats',methods=['GET','POST'])
-# def checkstats():
-#     if request.method == "POST":
-#         jsonData = request.get_json()
-#         model = SWAPPER.getLoadedModel(jsonData["model"])
-#         result = model.predict(jsonData)
-#         jsonData["pred_target"] = result
-#         # feedbackRepository.insert_feedback_json(jsonData)
-#         return jsonify({"result":result})
-#     # obj = {}
-#     # keys = SWAPPER.getModelKeys()
-#     # for key in keys:
-#     #     modelAbs = SWAPPER.getModel(key)
-#     #     features = list(map(lambda x : {"name":x[0],"type":x[1]},modelAbs.features))
-#     #     obj[key] = {
-#     #        "features" : features
-#     #     }
-#     return render_template(template_name_or_list = "tempoaryPred.jinja",features=obj,objstring=json.dumps(obj))
+@app.route('/<path:path>')
+def catch_all(path):
+    # Redirect all unregistered URLs to /home
+    return redirect(url_for('checkHeart'))
 
 
 if __name__ == '__main__':
-
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
     
-    with app.app_context(): 
-        SWAPPER.loadSavedModel()
-        try:
-            # db.drop_all()
-            db.create_all()
-            print("Database tables initialized successfully!")
-        except Exception as e:
-            print(f"Error creating database: {e}")
+    
     app.run(debug=True)

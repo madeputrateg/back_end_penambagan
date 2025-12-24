@@ -42,13 +42,13 @@
 
             <form id="heartForm">
                 <div class="form-grid">
-                    <div class="form-group age" style="visibility: hidden;">
+                    <div class="form-group age field-disabled" >
                         <label for="age"><span class="label-icon">👤</span> Age</label>
                         <input type="number" id="age" name="age" min="0" max="100" class="modern-input" />
                         <div class="error-message" id="age-error"></div>
                     </div>
 
-                    <div class="form-group sex" style="visibility: hidden;">
+                    <div class="form-group sex field-disabled" >
                         <label><span class="label-icon">⚧</span> Sex</label>
                         <div class="radio-group modern-radio">
                             <label class="radio-card">
@@ -62,7 +62,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group cp" style="visibility: hidden;">
+                    <div class="form-group cp field-disabled" >
                         <label for="cp"><span class="label-icon">💔</span> Chest Pain Type</label>
                         <select id="cp" name="cp" class="modern-select">
                             <option value="">Select type...</option>
@@ -73,17 +73,17 @@
                         </select>
                     </div>
 
-                    <div class="form-group trestbps" style="visibility: hidden;">
+                    <div class="form-group trestbps field-disabled" >
                         <label for="trestbps"><span class="label-icon">🩺</span> Resting Blood Pressure <span class="label-range">(94-200 mmHg)</span></label>
                         <input type="number" id="trestbps" name="trestbps" min="94" max="200" class="modern-input" />
                     </div>
 
-                    <div class="form-group chol" style="visibility: hidden;">
+                    <div class="form-group chol field-disabled" >
                         <label for="chol"><span class="label-icon">🧪</span> Serum Cholesterol <span class="label-range">(126-564 mg/dl)</span></label>
                         <input type="number" id="chol" name="chol" min="126" max="564" class="modern-input" />
                     </div>
 
-                    <div class="form-group fbs" style="visibility: hidden;">
+                    <div class="form-group fbs field-disabled" >
                         <label><span class="label-icon">🍬</span> Fasting Blood Sugar <span class="label-range">(>120 mg/dl)</span></label>
                         <div class="radio-group modern-radio">
                             <label class="radio-card">
@@ -97,7 +97,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group restecg" style="visibility: hidden;">
+                    <div class="form-group restecg field-disabled" >
                         <label for="restecg"><span class="label-icon">📊</span> Resting ECG Results</label>
                         <select id="restecg" name="restecg" class="modern-select">
                             <option value="">Select result...</option>
@@ -107,12 +107,12 @@
                         </select>
                     </div>
 
-                    <div class="form-group thalach" style="visibility: hidden;">
+                    <div class="form-group thalach field-disabled" >
                         <label for="thalach"><span class="label-icon">💗</span> Max Heart Rate <span class="label-range">(71-202 bpm)</span></label>
                         <input type="number" id="thalach" name="thalach" min="71" max="202" class="modern-input" />
                     </div>
 
-                    <div class="form-group exang" style="visibility: hidden;">
+                    <div class="form-group exang field-disabled" >
                         <label><span class="label-icon">🏃</span> Exercise Induced Angina</label>
                         <div class="radio-group modern-radio">
                             <label class="radio-card">
@@ -126,12 +126,12 @@
                         </div>
                     </div>
 
-                    <div class="form-group oldpeak" style="visibility: hidden;">
+                    <div class="form-group oldpeak field-disabled" >
                         <label for="oldpeak"><span class="label-icon">📉</span> ST Depression <span class="label-range">(0.0-6.2)</span></label>
                         <input type="number" id="oldpeak" name="oldpeak" min="0" max="6.2" step="0.1" class="modern-input" />
                     </div>
 
-                    <div class="form-group slope" style="visibility: hidden;">
+                    <div class="form-group slope field-disabled" >
                         <label for="slope"><span class="label-icon">📈</span> ST Segment Slope</label>
                         <select id="slope" name="slope" class="modern-select">
                             <option value="">Select slope...</option>
@@ -141,12 +141,12 @@
                         </select>
                     </div>
 
-                    <div class="form-group ca" style="visibility: hidden;">
+                    <div class="form-group ca field-disabled" >
                         <label for="ca"><span class="label-icon">🔬</span> Major Vessels <span class="label-range">(0-3)</span></label>
                         <input type="number" id="ca" name="ca" min="0" max="3" class="modern-input" />
                     </div>
 
-                    <div class="form-group full-width thal" style="visibility: hidden;">
+                    <div class="form-group full-width thal field-disabled" >
                         <label for="thal"><span class="label-icon">🧬</span> Thalassemia Status</label>
                         <select id="thal" name="thal" class="modern-select">
                             <option value="">Select status...</option>
@@ -166,7 +166,7 @@
                     </select>
                 </div>
 
-                <div class="button-group">
+                <div class="button-group ">
                     <button type="submit" class="submit-btn">
                         <span>Analyze Risk</span>
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -192,7 +192,7 @@
                 </div>
             </div>
 
-            <div class="feedback-section" id="feedbackSection" style="visibility: hidden;">
+            <div class="feedback-section" id="feedbackSection" style="visibility:hidden;" >
                 <h4 class="feedback-title">Was this prediction accurate?</h4>
                 <div class="feedback-buttons">
                     <button class="feedback-btn correct" id="correctpre"><span>✓</span> Prediction is Correct</button>
@@ -299,7 +299,18 @@
             if (!currentFeature) return;
             currentFeature.forEach((elem) => {
                 const ele = document.getElementsByClassName(elem[0])[0];
-                if(ele) ele.style.visibility = "hidden";
+                var flag = false;
+                if(ele) {
+                  data = ele.classList.values();
+                  data.forEach((x)=>{
+                    if(x=="field-disabled"){
+                      flag=true;
+                    }
+                  })
+                  if(!flag){
+                    ele.classList.add("field-disabled")
+                  }
+                }
             });
         }
 
@@ -309,7 +320,7 @@
             if (currentFeature) {
                 currentFeature.forEach((elem) => {
                     const ele = document.getElementsByClassName(elem[0])[0];
-                    if(ele) ele.style.visibility = "visible";
+                    if(ele) ele.classList.remove("field-disabled")
                 });
             }
         });
